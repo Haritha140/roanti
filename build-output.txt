@@ -1,0 +1,11 @@
+[36mvite v7.3.1 [32mbuilding client environment for production...[36m[39m
+transforming...
+[32mΓ£ô[39m 267 modules transformed.
+Γ£ù Build failed in 10.62s
+error during build:
+[vite:terser] terser not found. Since Vite v3, terser has become an optional dependency. You need to install it.
+    at loadTerserPath (file:///C:/Users/rusum/roanti/node_modules/vite/dist/node/chunks/config.js:32974:8)
+    at Object.renderChunk (file:///C:/Users/rusum/roanti/node_modules/vite/dist/node/chunks/config.js:33003:39)
+    at Object.handler (file:///C:/Users/rusum/roanti/node_modules/vite/dist/node/chunks/config.js:33743:13)
+    at file:///C:/Users/rusum/roanti/node_modules/rollup/dist/es/shared/node-entry.js:22571:40
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)

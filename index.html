@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GruhaBuddy AI – Intelligent Interior Design Assistant</title>
+  <meta name="description"
+    content="Upload your room photo and get AI-powered interior design transformations with smart color recommendations, furniture suggestions, budget optimization, and interactive 3D room previews." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+</head>
+
+<body>
+  <!-- Navigation -->
+  <nav id="main-nav" class="glass-nav">
+    <div class="nav-inner">
+      <div class="nav-logo" id="nav-logo">
+        <span class="logo-icon">🏠</span>
+        <span class="logo-text">GruhaBuddy<span class="logo-ai">AI</span></span>
+      </div>
+      <div class="nav-links" id="nav-links">
+        <a href="#hero" class="nav-link active">Home</a>
+        <a href="#upload-section" class="nav-link">Upload</a>
+        <a href="#color-section" class="nav-link">Colors</a>
+        <a href="#furniture-section" class="nav-link">Furniture</a>
+        <a href="#budget-section" class="nav-link">Budget</a>
+        <a href="#slider-section" class="nav-link">AI Design</a>
+        <a href="#room3d-section" class="nav-link">3D View</a>
+      </div>
+      <div class="nav-actions">
+        <button id="lang-toggle" class="nav-btn" title="Language">🌐 EN</button>
+        <button id="theme-toggle" class="nav-btn" title="Toggle theme">🌙</button>
+        <button id="mobile-menu-btn" class="nav-btn mobile-only">☰</button>
+      </div>
+    </div>
+  </nav>
+
+  <canvas id="particles-canvas"></canvas>
+
+  <!-- HERO SECTION -->
+  <section id="hero" class="section hero-section">
+    <div class="hero-content">
+      <div class="hero-text">
+        <div class="hero-badge">
+          <span class="badge-dot"></span>
+          <span>AI-Powered Interior Design</span>
+        </div>
+        <h1 class="hero-title">Design Your Dream Home <span class="gradient-text">with AI</span></h1>
+        <p class="hero-subtitle">Upload your room. Get intelligent 3D transformations instantly. Powered by advanced AI
+          for color, furniture, budget optimization.</p>
+        <div class="hero-buttons">
+          <button id="hero-upload-btn" class="btn btn-primary glow-btn">
+            <span class="btn-icon">📤</span> Upload Room
+          </button>
+          <button id="hero-demo-btn" class="btn btn-secondary">
+            <span class="btn-icon">🎮</span> Try Demo
+          </button>
+          <button id="hero-explore-btn" class="btn btn-outline">
+            <span class="btn-icon">🔍</span> Explore Designs
+          </button>
+        </div>
+        <div class="hero-stats">
+          <div class="stat-item">
+            <span class="stat-number">12,847</span>
+            <span class="stat-label">Designs Created</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number">98%</span>
+            <span class="stat-label">Satisfaction</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number">50+</span>
+            <span class="stat-label">Design Styles</span>
+          </div>
+        </div>
+      </div>
+      <div class="hero-3d" id="hero-3d-container"></div>
+    </div>
+    <div class="hero-scroll-indicator">
+      <div class="scroll-arrow"></div>
+    </div>
+  </section>
+
+  <!-- STEP 1: UPLOAD SECTION -->
+  <section id="upload-section" class="section">
+    <div class="section-container">
+      <div class="section-header">
+        <span class="section-badge">Step 1</span>
+        <h2 class="section-title">Upload Your Room</h2>
+        <p class="section-subtitle">Upload a photo of your room to begin the AI transformation</p>
+      </div>
+      <div class="upload-area" id="upload-area">
+        <div class="upload-dropzone" id="upload-dropzone">
+          <div class="upload-icon">📷</div>
+          <h3>Drag & Drop your room photo</h3>
+          <p>or click to browse • JPG, PNG, HEIC supported</p>
+          <input type="file" id="file-input" accept=".jpg,.jpeg,.png,.heic,.webp" hidden />
+          <button id="browse-btn" class="btn btn-primary">Browse Files</button>
+        </div>
+        <div class="upload-preview" id="upload-preview" style="display:none;">
+          <img id="preview-image" alt="Uploaded room preview" />
+          <div class="upload-preview-overlay">
+            <button id="change-image-btn" class="btn btn-secondary btn-sm">Change Image</button>
+          </div>
+          <div class="upload-info" id="upload-info"></div>
+        </div>
+        <div class="upload-error" id="upload-error" style="display:none;"></div>
+      </div>
+      <div class="room-type-selector" id="room-type-selector" style="display:none;">
+        <h3>Select Room Type</h3>
+        <div class="room-type-grid">
+          <button class="room-type-card active" data-room="living">
+            <span class="room-type-icon">🛋️</span><span>Living Room</span>
+          </button>
+          <button class="room-type-card" data-room="bedroom">
+            <span class="room-type-icon">🛏️</span><span>Bedroom</span>
+          </button>
+          <button class="room-type-card" data-room="kitchen">
+            <span class="room-type-icon">🍳</span><span>Kitchen</span>
+          </button>
+          <button class="room-type-card" data-room="workspace">
+            <span class="room-type-icon">💻</span><span>Workspace</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 2: COLOR RECOMMENDATION -->
+  <section id="color-section" class="section">
+    <div class="section-container">
+      <div class="section-header">
+        <span class="section-badge">Step 2</span>
+        <h2 class="section-title">Smart Color Engine</h2>
+        <p class="section-subtitle">AI-powered color recommendations for walls, accent, ceiling & furniture</p>
+      </div>
+      <div class="color-rec-grid" id="color-rec-grid">
+        <div class="color-rec-card" id="primary-wall-card">
+          <div class="color-rec-preview" id="primary-wall-preview" style="background:#E8DCD0;"></div>
+          <div class="color-rec-info">
+            <h4>Primary Wall</h4>
+            <div class="color-hex-row">
+              <input type="color" id="primary-wall-picker" value="#E8DCD0" class="color-picker-input" />
+              <input type="text" id="primary-wall-hex" value="#E8DCD0" class="hex-input" />
+            </div>
+          </div>
+        </div>
+        <div class="color-rec-card" id="accent-wall-card">
+          <div class="color-rec-preview" id="accent-wall-preview" style="background:#4A6741;"></div>
+          <div class="color-rec-info">
+            <h4>Accent Wall</h4>
+            <div class="color-hex-row">
+              <input type="color" id="accent-wall-picker" value="#4A6741" class="color-picker-input" />
+              <input type="text" id="accent-wall-hex" value="#4A6741" class="hex-input" />
+            </div>
+          </div>
+        </div>
+        <div class="color-rec-card" id="ceiling-card">
+          <div class="color-rec-preview" id="ceiling-preview" style="background:#FAFAFA;"></div>
+          <div class="color-rec-info">
+            <h4>Ceiling</h4>
+            <div class="color-hex-row">
+              <input type="color" id="ceiling-picker" value="#FAFAFA" class="color-picker-input" />
+              <input type="text" id="ceiling-hex" value="#FAFAFA" class="hex-input" />
+            </div>
+          </div>
+        </div>
+        <div class="color-rec-card" id="furniture-color-card">
+          <div class="color-rec-preview" id="furniture-color-preview" style="background:#8B6F47;"></div>
+          <div class="color-rec-info">
+            <h4>Furniture Color</h4>
+            <div class="color-hex-row">
+              <input type="color" id="furniture-color-picker" value="#8B6F47" class="color-picker-input" />
+              <input type="text" id="furniture-color-hex" value="#8B6F47" class="hex-input" />
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Theme Presets -->
+      <div class="color-presets">
+        <h3>Theme Presets</h3>
+        <div class="preset-grid" id="preset-grid"></div>
+      </div>
+      <!-- Design Theme -->
+      <div class="theme-selector" id="theme-selector">
+        <h3>Design Theme</h3>
+        <div class="theme-grid">
+          <button class="theme-card active" data-theme="scandinavian"><span
+              class="theme-icon">🇸🇪</span><span>Scandinavian</span></button>
+          <button class="theme-card" data-theme="modern-luxury"><span class="theme-icon">💎</span><span>Modern
+              Luxury</span></button>
+          <button class="theme-card" data-theme="boho"><span class="theme-icon">🌿</span><span>Boho Chic</span></button>
+          <button class="theme-card" data-theme="industrial"><span
+              class="theme-icon">⚙️</span><span>Industrial</span></button>
+          <button class="theme-card" data-theme="japandi"><span
+              class="theme-icon">🎋</span><span>Japandi</span></button>
+        </div>
+      </div>
+      <!-- Color Palette -->
+      <div class="color-palette-section">
+        <h3>Color Palette <span class="color-count">(120+ colors)</span></h3>
+        <div class="palette-categories" id="palette-categories">
+          <button class="palette-cat-btn active" data-category="all">All</button>
+          <button class="palette-cat-btn" data-category="neutrals">Neutrals</button>
+          <button class="palette-cat-btn" data-category="luxury">Luxury</button>
+          <button class="palette-cat-btn" data-category="earth">Earth Tones</button>
+          <button class="palette-cat-btn" data-category="pastels">Pastels</button>
+          <button class="palette-cat-btn" data-category="vibrant">Vibrant</button>
+          <button class="palette-cat-btn" data-category="dark">Dark Mode</button>
+        </div>
+        <div class="color-grid" id="color-grid"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 3: FURNITURE -->
+  <section id="furniture-section" class="section">
+    <div class="section-container">
+      <div class="section-header">
+        <span class="section-badge">Step 3</span>
+        <h2 class="section-title">AI Furniture Suggestions</h2>
+        <p class="section-subtitle">Smart furniture picks based on your room type, theme, and budget</p>
+      </div>
+      <div class="furniture-room-label" id="furniture-room-label">
+        Showing furniture for: <strong>Living Room</strong>
+      </div>
+      <div class="furniture-filters" id="furniture-filters"></div>
+      <div class="furniture-grid" id="furniture-grid"></div>
+      <div class="furniture-cart glass-card" id="furniture-cart">
+        <h3>🛒 <span>Selected Items</span></h3>
+        <div id="cart-items"></div>
+        <div class="cart-total">
+          <span>Total:</span>
+          <span id="cart-total-amount">₹0</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 4: BUDGET -->
+  <section id="budget-section" class="section">
+    <div class="section-container">
+      <div class="section-header">
+        <span class="section-badge">Step 4</span>
+        <h2 class="section-title">Smart Budget System</h2>
+        <p class="section-subtitle">AI optimizes your design to match your budget perfectly</p>
+      </div>
+      <div class="budget-wizard glass-card" id="budget-wizard">
+        <div class="wizard-step active" id="wizard-step-1">
+          <h3>💰 What is your total budget?</h3>
+          <div class="budget-input-group">
+            <span class="currency">₹</span>
+            <input type="number" id="budget-amount" placeholder="e.g. 500000" value="500000" min="50000"
+              max="10000000" />
+          </div>
+          <input type="range" id="budget-slider" min="50000" max="10000000" value="500000" step="10000" />
+          <div class="budget-range-labels"><span>₹50K</span><span>₹1Cr</span></div>
+        </div>
+        <div class="wizard-step" id="wizard-step-2">
+          <h3>📐 Room Dimensions</h3>
+          <div class="dimension-inputs">
+            <div class="dim-group"><label>Length (ft)</label><input type="number" id="room-length" value="15" min="5"
+                max="100" /></div>
+            <div class="dim-group"><label>Width (ft)</label><input type="number" id="room-width" value="12" min="5"
+                max="100" /></div>
+            <div class="dim-group"><label>Height (ft)</label><input type="number" id="room-height" value="10" min="7"
+                max="20" /></div>
+          </div>
+          <div class="room-area-display">Area: <span id="room-area">180</span> sq ft | Volume: <span
+              id="room-volume">1800</span> cu ft</div>
+        </div>
+        <div class="wizard-step" id="wizard-step-3">
+          <h3>💡 Preferences</h3>
+          <div class="pref-group">
+            <label>Lighting Preference</label>
+            <div class="pref-options">
+              <button class="pref-btn active" data-pref="lighting" data-val="warm">☀️ Warm</button>
+              <button class="pref-btn" data-pref="lighting" data-val="neutral">💡 Neutral</button>
+              <button class="pref-btn" data-pref="lighting" data-val="cool">❄️ Cool</button>
+            </div>
+          </div>
+          <div class="pref-group">
+            <label>Style Preference</label>
+            <div class="pref-options">
+              <button class="pref-btn active" data-pref="style" data-val="modern">Modern</button>
+              <button class="pref-btn" data-pref="style" data-val="traditional">Traditional</button>
+              <button class="pref-btn" data-pref="style" data-val="contemporary">Contemporary</button>
+              <button class="pref-btn" data-pref="style" data-val="minimalist">Minimalist</button>
+            </div>
+          </div>
+          <div class="pref-group">
+            <label>Vastu Requirement</label>
+            <div class="pref-options">
+              <button class="pref-btn" data-pref="vastu" data-val="yes">✅ Yes</button>
+              <button class="pref-btn active" data-pref="vastu" data-val="no">❌ No</button>
+            </div>
+          </div>
+          <div class="pref-group">
+            <label>Property Type</label>
+            <div class="pref-options">
+              <button class="pref-btn active" data-pref="property" data-val="apartment">🏢 Apartment</button>
+              <button class="pref-btn" data-pref="property" data-val="independent">🏡 Independent</button>
+            </div>
+          </div>
+        </div>
+        <div class="wizard-nav">
+          <button id="wizard-prev" class="btn btn-secondary" style="display:none;">← Previous</button>
+          <div class="wizard-dots"><span class="wizard-dot active"></span><span class="wizard-dot"></span><span
+              class="wizard-dot"></span></div>
+          <button id="wizard-next" class="btn btn-primary">Next →</button>
+        </div>
+      </div>
+      <!-- Budget suggestions -->
+      <div class="budget-suggestions glass-card" id="budget-suggestions" style="display:none;">
+        <h3>💡 Budget-Smart Suggestions</h3>
+        <p class="budget-suggestion-text" id="budget-suggestion-text"></p>
+        <div id="budget-alt-items"></div>
+      </div>
+      <!-- Budget Breakdown -->
+      <div class="budget-results" id="budget-results" style="display:none;">
+        <div class="scores-grid">
+          <div class="score-card glass-card">
+            <div class="score-ring" id="score-budget"><svg viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="54" class="score-bg" />
+                <circle cx="60" cy="60" r="54" class="score-fill" />
+              </svg><span class="score-value">87</span></div>
+            <h4>Budget Optimization</h4>
+          </div>
+          <div class="score-card glass-card">
+            <div class="score-ring" id="score-sustain"><svg viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="54" class="score-bg" />
+                <circle cx="60" cy="60" r="54" class="score-fill" />
+              </svg><span class="score-value">92</span></div>
+            <h4>Sustainability</h4>
+          </div>
+          <div class="score-card glass-card">
+            <div class="score-ring" id="score-space"><svg viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="54" class="score-bg" />
+                <circle cx="60" cy="60" r="54" class="score-fill" />
+              </svg><span class="score-value">78</span></div>
+            <h4>Space Utilization</h4>
+          </div>
+          <div class="score-card glass-card">
+            <div class="score-ring" id="score-aesthetic"><svg viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="54" class="score-bg" />
+                <circle cx="60" cy="60" r="54" class="score-fill" />
+              </svg><span class="score-value">95</span></div>
+            <h4>Aesthetic Harmony</h4>
+          </div>
+        </div>
+        <div class="breakdown-grid">
+          <div class="breakdown-card glass-card">
+            <h3>💰 Cost Breakdown</h3>
+            <div class="breakdown-items" id="breakdown-items"></div>
+            <div class="breakdown-total"><span>Total Estimated Cost</span><span id="breakdown-total-amount">₹0</span>
+            </div>
+          </div>
+          <div class="breakdown-card glass-card">
+            <h3>📊 Budget Distribution</h3>
+            <canvas id="budget-chart" width="300" height="300"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 5: AI TRANSFORMATION (Before/After) - AFTER ALL PREFERENCES -->
+  <section id="slider-section" class="section">
+    <div class="section-container">
+      <div class="section-header">
+        <span class="section-badge">Step 5</span>
+        <h2 class="section-title">AI Room Transformation</h2>
+        <p class="section-subtitle">Your preferences are applied — see the AI-generated redesign of your room</p>
+      </div>
+      <div class="ai-processing" id="ai-processing" style="display:none;">
+        <div class="processing-spinner"></div>
+        <p>🧠 AI is analyzing your room and applying your preferences...</p>
+        <div class="processing-steps" id="processing-steps"></div>
+      </div>
+      <div class="slider-wrapper" id="slider-wrapper">
+        <div class="slider-placeholder" id="slider-placeholder">
+          <div class="placeholder-content">
+            <span class="placeholder-icon">🖼️</span>
+            <p>Complete Steps 1–4 above, then click <strong>"Generate AI Design"</strong> to see the transformation</p>
+            <button id="generate-design-btn" class="btn btn-primary glow-btn" style="margin-top:16px;">✨ Generate AI
+              Design</button>
+          </div>
+        </div>
+        <div class="comparison-slider" id="comparison-slider" style="display:none;">
+          <div class="comparison-before" id="comparison-before">
+            <img id="before-image" alt="Before" />
+            <span class="comparison-label">BEFORE</span>
+          </div>
+          <div class="comparison-after" id="comparison-after">
+            <canvas id="after-canvas"></canvas>
+            <span class="comparison-label">AFTER — AI REDESIGN</span>
+          </div>
+          <div class="comparison-handle" id="comparison-handle">
+            <div class="handle-line"></div>
+            <div class="handle-circle">⟷</div>
+            <div class="handle-line"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 6: 3D ROOM VIEW -->
+  <section id="room3d-section" class="section">
+    <div class="section-container">
+      <div class="section-header">
+        <span class="section-badge">Step 6</span>
+        <h2 class="section-title">Interactive 3D Room</h2>
+        <p class="section-subtitle">Explore your redesigned room in full 3D with all your selected furniture</p>
+      </div>
+      <div class="room3d-wrapper glass-card">
+        <div class="room3d-toolbar">
+          <button id="room3d-rotate" class="toolbar-btn active" title="Rotate">🔄</button>
+          <button id="room3d-zoom" class="toolbar-btn" title="Zoom">🔍</button>
+          <button id="room3d-pan" class="toolbar-btn" title="Pan">✋</button>
+          <button id="room3d-daynight" class="toolbar-btn" title="Day/Night">🌙</button>
+          <button id="room3d-reset" class="toolbar-btn" title="Reset View">🏠</button>
+          <button id="room3d-fullscreen" class="toolbar-btn" title="Fullscreen">⛶</button>
+        </div>
+        <div id="room3d-canvas-container"></div>
+        <div class="room3d-info" id="room3d-info">
+          <span id="room3d-furniture-count">0 items in room</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- REPORT SECTION -->
+  <section id="report-section" class="section">
+    <div class="section-container">
+      <div class="section-header">
+        <span class="section-badge">Final</span>
+        <h2 class="section-title">Design Report</h2>
+        <p class="section-subtitle">Download your complete AI-generated design report</p>
+      </div>
+      <div class="report-preview glass-card" id="report-preview">
+        <div class="report-summary">
+          <div class="report-item"><span class="report-icon">🎨</span>
+            <div>
+              <h4>Color Scheme</h4>
+              <p id="report-colors">Selected colors will appear here</p>
+            </div>
+          </div>
+          <div class="report-item"><span class="report-icon">🛋️</span>
+            <div>
+              <h4>Furniture</h4>
+              <p id="report-furniture">Selected furniture will appear here</p>
+            </div>
+          </div>
+          <div class="report-item"><span class="report-icon">💰</span>
+            <div>
+              <h4>Budget</h4>
+              <p id="report-budget">Budget details will appear here</p>
+            </div>
+          </div>
+          <div class="report-item"><span class="report-icon">📐</span>
+            <div>
+              <h4>Room Dimensions</h4>
+              <p id="report-dimensions">Dimensions will appear here</p>
+            </div>
+          </div>
+        </div>
+        <div class="report-actions">
+          <button id="download-report-btn" class="btn btn-primary glow-btn">📄 Download Design Report (PDF)</button>
+          <button id="share-design-btn" class="btn btn-secondary">🔗 Share Design</button>
+          <button id="save-design-btn" class="btn btn-outline">💾 Save Design</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="app-footer">
+    <div class="footer-inner">
+      <div class="footer-brand"><span class="logo-icon">🏠</span><span class="logo-text">GruhaBuddy<span
+            class="logo-ai">AI</span></span>
+        <p>Intelligent Interior Design, Powered by AI</p>
+      </div>
+      <div class="footer-links"><a href="#">About</a><a href="#">Privacy</a><a href="#">Terms</a><a href="#">Contact</a>
+      </div>
+      <p class="footer-copy">© 2026 GruhaBuddy AI. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- AI ASSISTANT -->
+  <div id="ai-assistant-toggle" class="ai-toggle"><span class="ai-toggle-icon">🤖</span><span
+      class="ai-toggle-pulse"></span></div>
+  <div id="ai-assistant" class="ai-assistant glass-card" style="display:none;">
+    <div class="ai-header">
+      <div class="ai-header-info"><span class="ai-avatar">🤖</span>
+        <div>
+          <h3>GruhaBuddy AI</h3><span class="ai-status">● Online</span>
+        </div>
+      </div>
+      <button id="ai-close" class="ai-close-btn">✕</button>
+    </div>
+    <div class="ai-messages" id="ai-messages">
+      <div class="ai-message bot"><span class="msg-avatar">🤖</span>
+        <div class="msg-content">
+          <p>Hello! I'm your GruhaBuddy AI assistant. I can help you with:</p>
+          <ul>
+            <li>🎨 Color recommendations</li>
+            <li>🛋️ Furniture suggestions</li>
+            <li>💰 Budget optimization</li>
+            <li>🏠 Vastu guidelines</li>
+            <li>📐 Room layout advice</li>
+          </ul>
+          <p>Upload a room photo or ask me anything about interior design!</p>
+        </div>
+      </div>
+    </div>
+    <div class="ai-input-area">
+      <div class="ai-quick-actions">
+        <button class="quick-action" data-msg="Suggest colors for my room">🎨 Colors</button>
+        <button class="quick-action" data-msg="What furniture suits my budget?">🛋️ Furniture</button>
+        <button class="quick-action" data-msg="Give me vastu tips">🧭 Vastu</button>
+        <button class="quick-action" data-msg="Suggest Hyderabad modern apartment style">🏙️ Hyderabad</button>
+      </div>
+      <div class="ai-input-row">
+        <input type="text" id="ai-input" placeholder="Ask me anything about interior design..." />
+        <button id="ai-send" class="btn btn-primary btn-sm">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+
+</html>
