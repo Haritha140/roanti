@@ -368,7 +368,7 @@
     </div>
   </section>
 
-  <!-- STEP 5: AI TRANSFORMATION (Before/After) - AFTER ALL PREFERENCES -->
+  <!-- STEP 5: AI TRANSFORMATION — Direct AI Result -->
   <section id="slider-section" class="section">
     <div class="section-container">
       <div class="section-header">
@@ -390,19 +390,13 @@
               Design</button>
           </div>
         </div>
-        <div class="comparison-slider" id="comparison-slider" style="display:none;">
-          <div class="comparison-before" id="comparison-before">
-            <img id="before-image" alt="Before" />
-            <span class="comparison-label">BEFORE</span>
+        <div class="ai-result-display" id="comparison-slider" style="display:none;">
+          <div class="ai-result-header">
+            <span class="ai-result-badge">✨ AI REDESIGNED</span>
+            <button id="regenerate-btn" class="btn btn-secondary btn-sm" onclick="document.getElementById('generate-design-btn')?.click()">🔄 Regenerate</button>
           </div>
-          <div class="comparison-after" id="comparison-after">
+          <div class="ai-result-canvas-wrap">
             <canvas id="after-canvas"></canvas>
-            <span class="comparison-label">AFTER — AI REDESIGN</span>
-          </div>
-          <div class="comparison-handle" id="comparison-handle">
-            <div class="handle-line"></div>
-            <div class="handle-circle">⟷</div>
-            <div class="handle-line"></div>
           </div>
         </div>
       </div>

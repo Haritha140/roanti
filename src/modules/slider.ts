@@ -2,11 +2,8 @@ import { appState, onEvent, showToast } from '../main';
 
 export function initSlider() {
     const placeholder = document.getElementById('slider-placeholder') as HTMLElement;
-    const slider = document.getElementById('comparison-slider') as HTMLElement;
-    const beforeImg = document.getElementById('before-image') as HTMLImageElement;
+    const resultContainer = document.getElementById('comparison-slider') as HTMLElement;
     const afterCanvas = document.getElementById('after-canvas') as HTMLCanvasElement;
-    const handle = document.getElementById('comparison-handle') as HTMLElement;
-    const afterDiv = document.getElementById('comparison-after') as HTMLElement;
     const generateBtn = document.getElementById('generate-design-btn') as HTMLButtonElement;
     const processingEl = document.getElementById('ai-processing') as HTMLElement;
     const processingSteps = document.getElementById('processing-steps') as HTMLElement;
@@ -14,7 +11,7 @@ export function initSlider() {
 
     generateBtn?.addEventListener('click', generateDesign);
     onEvent('regenerateDesign', () => {
-        if (slider.style.display === 'block' && appState.uploadedImage && !isGenerating) {
+        if (resultContainer.style.display === 'block' && appState.uploadedImage && !isGenerating) {
             applyAITransformation();
         }
     });
@@ -31,10 +28,9 @@ export function initSlider() {
         const steps = [
             '🔍 Analyzing room geometry...', '🧱 Detecting surfaces via ML...',
             '🎨 Computing color palette...', '🛋️ Placing furniture...',
-            '💡 Rendering lighting ({lighting})...', '✨ Applying {theme} style...',
-            '📐 Optimizing {length}×{width}ft layout...', '🏠 Finalizing redesign...',
-        ].map(s => s.replace('{lighting}', appState.lighting).replace('{theme}', appState.designTheme)
-            .replace('{length}', String(appState.roomDimensions.length)).replace('{width}', String(appState.roomDimensions.width)));
+            `💡 Rendering lighting (${appState.lighting})...`, `✨ Applying ${appState.designTheme} style...`,
+            `📐 Optimizing ${appState.roomDimensions.length}×${appState.roomDimensions.width}ft layout...`, '🏠 Finalizing redesign...',
+        ];
         let stepIdx = 0;
         processingSteps.innerHTML = '';
         const stepInterval = setInterval(() => {
@@ -48,7 +44,7 @@ export function initSlider() {
             setTimeout(() => {
                 clearInterval(stepInterval); processingEl.style.display = 'none';
                 applyAITransformation(); placeholder.style.display = 'none';
-                slider.style.display = 'block'; initDragSlider();
+                resultContainer.style.display = 'block';
                 showToast('AI design generated successfully!', 'success');
                 isGenerating = false; resolve();
             }, 4000);
@@ -57,7 +53,6 @@ export function initSlider() {
 
     function applyAITransformation() {
         if (!appState.uploadedImage) return;
-        beforeImg.src = appState.uploadedImageDataURL!;
         const img = new Image();
         img.crossOrigin = 'anonymous';
         img.onload = () => {
@@ -101,13 +96,11 @@ export function initSlider() {
         const cc = hexRgb(appState.colors.ceiling);
         const fc = hexRgb(appState.colors.furniture);
 
-        // Build luminance map
         const lum = new Float32Array(w * h);
         for (let i = 0; i < w * h; i++) {
             lum[i] = d[i * 4] * 0.299 + d[i * 4 + 1] * 0.587 + d[i * 4 + 2] * 0.114;
         }
 
-        // Edge detection
         const edges = new Float32Array(w * h);
         for (let y = 1; y < h - 1; y++) {
             for (let x = 1; x < w - 1; x++) {
@@ -134,23 +127,19 @@ export function initSlider() {
 
                 let tR = 0, tG = 0, tB = 0, blend = 0;
 
-                // Ceiling
                 if (yr < 0.2 && lum[pi] > 90 && sat < 0.35) {
                     blend = 0.7 * (1 - yr / 0.2) * Math.max(0, 1 - edge / 20);
                     tR = cc.r; tG = cc.g; tB = cc.b;
                 }
-                // Accent wall (left side)
                 else if (xr < 0.35 && yr > 0.08 && yr < 0.7 && sat < 0.4 && edge < 14) {
                     const f = Math.min(xr / 0.12, 1) * (1 - Math.max(0, (xr - 0.25) / 0.1));
                     blend = 0.72 * f * Math.max(0, 1 - edge / 14);
                     tR = ac.r; tG = ac.g; tB = ac.b;
                 }
-                // Primary wall
                 else if (yr > 0.08 && yr < 0.7 && lum[pi] > 55 && sat < 0.35 && edge < 12) {
                     blend = (lum[pi] > 130 ? 0.68 : 0.45) * Math.max(0, 1 - edge / 12);
                     tR = wc.r; tG = wc.g; tB = wc.b;
                 }
-                // Floor
                 else if (yr > 0.68 && lum[pi] > 40 && lum[pi] < 220 && edge < 14) {
                     blend = 0.35 * Math.min(1, (yr - 0.68) / 0.12) * Math.max(0, 1 - edge / 14);
                     tR = fc.r; tG = fc.g; tB = fc.b;
@@ -162,7 +151,6 @@ export function initSlider() {
                     d[i + 2] = lerp(d[i + 2], tB, blend);
                 }
 
-                // Lighting tone
                 if (appState.lighting === 'warm') {
                     d[i] = clamp(d[i] + 8); d[i + 1] = clamp(d[i + 1] + 4); d[i + 2] = clamp(d[i + 2] - 5);
                 } else if (appState.lighting === 'cool') {
@@ -175,22 +163,15 @@ export function initSlider() {
 
     function drawRoomOverlay(ctx: CanvasRenderingContext2D, w: number, h: number) {
         ctx.save();
-        // Wall accent strip / wainscoting line
         ctx.strokeStyle = darken(appState.colors.primaryWall, 15);
         ctx.lineWidth = 2; ctx.globalAlpha = 0.35;
         ctx.beginPath(); ctx.moveTo(0, h * 0.45); ctx.lineTo(w, h * 0.45); ctx.stroke();
-
-        // Crown molding line
         ctx.strokeStyle = lighten(appState.colors.ceiling, 15);
         ctx.lineWidth = 3; ctx.globalAlpha = 0.25;
         ctx.beginPath(); ctx.moveTo(0, h * 0.08); ctx.lineTo(w, h * 0.08); ctx.stroke();
-
-        // Baseboard
         ctx.globalAlpha = 0.2;
         ctx.fillStyle = lighten(appState.colors.primaryWall, 20);
         ctx.fillRect(0, h * 0.67, w, h * 0.015);
-
-        // Window light rays
         ctx.globalAlpha = 0.06;
         ctx.globalCompositeOperation = 'screen';
         const rayGrad = ctx.createLinearGradient(w * 0.65, 0, w * 0.4, h * 0.7);
@@ -232,32 +213,26 @@ export function initSlider() {
                 xOff += w * 0.14;
             } else if (item.category === 'decor') {
                 if (item.id?.includes('rug')) drawRug(ctx, w * 0.5, baseY + h * 0.11, w * 0.48, h * 0.1, col);
-                else if (item.id?.includes('plant')) { drawPlant(ctx, xOff, baseY, h); xOff += w * 0.06; }
             }
         });
         ctx.restore();
     }
 
     function drawSofa(ctx: CanvasRenderingContext2D, x: number, y: number, sw: number, sh: number, col: string) {
-        // Shadow
         ctx.save(); ctx.globalAlpha = 0.12; ctx.fillStyle = '#000';
         ctx.beginPath(); ctx.ellipse(x + sw / 2, y + sh + 6, sw * 0.5, 7, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
         ctx.globalAlpha = 0.82;
-        // Back
         const bgr = ctx.createLinearGradient(x, y - sh * 0.5, x, y);
         bgr.addColorStop(0, darken(col, 25)); bgr.addColorStop(1, darken(col, 12));
         ctx.fillStyle = bgr;
         ctx.beginPath(); ctx.roundRect(x - 2, y - sh * 0.52, sw + 4, sh * 0.3, 5); ctx.fill();
-        // Arms
         ctx.fillStyle = darken(col, 20);
         ctx.beginPath(); ctx.roundRect(x - 14, y - sh * 0.35, 16, sh * 1.35, [6, 0, 0, 6]); ctx.fill();
         ctx.beginPath(); ctx.roundRect(x + sw - 2, y - sh * 0.35, 16, sh * 1.35, [0, 6, 6, 0]); ctx.fill();
-        // Seat
         const sg = ctx.createLinearGradient(x, y, x, y + sh);
         sg.addColorStop(0, lighten(col, 5)); sg.addColorStop(1, col);
         ctx.fillStyle = sg;
         ctx.beginPath(); ctx.roundRect(x, y, sw, sh, 5); ctx.fill();
-        // Cushions
         const cw = (sw - 14) / 3;
         for (let i = 0; i < 3; i++) {
             const cg = ctx.createLinearGradient(0, y + 3, 0, y + sh - 5);
@@ -265,7 +240,6 @@ export function initSlider() {
             ctx.fillStyle = cg;
             ctx.beginPath(); ctx.roundRect(x + 4 + i * (cw + 3), y + 4, cw, sh - 9, 4); ctx.fill();
         }
-        // Throw pillows
         ctx.fillStyle = lighten(col, 30);
         ctx.beginPath(); ctx.roundRect(x + 8, y - sh * 0.25, sw * 0.14, sh * 0.45, 4); ctx.fill();
         ctx.fillStyle = darken(col, 5);
@@ -276,14 +250,11 @@ export function initSlider() {
         ctx.save(); ctx.globalAlpha = 0.1; ctx.fillStyle = '#000';
         ctx.beginPath(); ctx.ellipse(x + bw / 2, y + bh + 8, bw * 0.45, 8, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
         ctx.globalAlpha = 0.82;
-        // Frame
         ctx.fillStyle = darken(col, 8);
         ctx.beginPath(); ctx.roundRect(x - 3, y - 3, bw + 6, bh + 6, 4); ctx.fill();
-        // Mattress
         const mg = ctx.createLinearGradient(x, y, x, y + bh);
         mg.addColorStop(0, lighten(col, 15)); mg.addColorStop(1, col);
         ctx.fillStyle = mg; ctx.beginPath(); ctx.roundRect(x, y, bw, bh, 3); ctx.fill();
-        // Headboard
         const hg = ctx.createLinearGradient(x, y - bh * 0.55, x, y);
         hg.addColorStop(0, darken(col, 32)); hg.addColorStop(1, darken(col, 18));
         ctx.fillStyle = hg;
@@ -291,12 +262,10 @@ export function initSlider() {
         ctx.moveTo(x - 2, y); ctx.lineTo(x - 2, y - bh * 0.45);
         ctx.quadraticCurveTo(x + bw / 2, y - bh * 0.6, x + bw + 2, y - bh * 0.45);
         ctx.lineTo(x + bw + 2, y); ctx.fill();
-        // Pillows
         const pw = bw * 0.26, ph = bh * 0.3;
         ctx.fillStyle = '#F5F0E8';
         ctx.beginPath(); ctx.roundRect(x + 12, y + 5, pw, ph, 6); ctx.fill();
         ctx.beginPath(); ctx.roundRect(x + bw - pw - 12, y + 5, pw, ph, 6); ctx.fill();
-        // Blanket fold
         const blg = ctx.createLinearGradient(x, y + bh * 0.45, x, y + bh * 0.75);
         blg.addColorStop(0, lighten(col, 22)); blg.addColorStop(1, lighten(col, 12));
         ctx.fillStyle = blg;
@@ -324,7 +293,6 @@ export function initSlider() {
         ctx.beginPath();
         ctx.moveTo(x, baseY - h * 0.155); ctx.lineTo(x + 28, baseY - h * 0.155);
         ctx.lineTo(x + 22, baseY - h * 0.21); ctx.lineTo(x + 6, baseY - h * 0.21); ctx.fill();
-        // Glow
         ctx.save();
         const gl = ctx.createRadialGradient(x + 14, baseY - h * 0.13, 0, x + 14, baseY - h * 0.13, h * 0.13);
         gl.addColorStop(0, 'rgba(255,210,130,0.3)'); gl.addColorStop(1, 'rgba(255,210,130,0)');
@@ -354,37 +322,22 @@ export function initSlider() {
         ctx.restore();
     }
 
-    function drawPlant(ctx: CanvasRenderingContext2D, x: number, baseY: number, h: number) {
-        ctx.fillStyle = '#8B4513';
-        ctx.beginPath(); ctx.roundRect(x, baseY + h * 0.01, 18, 14, 3); ctx.fill();
-        ['#2E8B57', '#3CB371', '#228B22', '#32CD32', '#1B5E20', '#2E7D32'].forEach((g, i) => {
-            ctx.fillStyle = g; ctx.globalAlpha = 0.75;
-            ctx.beginPath();
-            ctx.ellipse(x + 9 + Math.cos(i * 1.1) * 9, baseY - 4 + Math.sin(i * 0.85) * 7, 8, 6, i * 0.5, 0, Math.PI * 2);
-            ctx.fill();
-        });
-        ctx.globalAlpha = 0.82;
-    }
-
     function drawCurtains(ctx: CanvasRenderingContext2D, w: number, h: number) {
         const ci = appState.selectedFurniture.find(f => f.category === 'curtain');
         if (!ci) return;
         const col = ci.color || '#FFFAF0';
         ctx.save(); ctx.globalAlpha = 0.5;
         const wx = w * 0.7, wy = h * 0.08, ww = w * 0.25, wh = h * 0.4;
-        // Left
         const lg = ctx.createLinearGradient(wx - 35, wy, wx - 15, wy + wh);
         lg.addColorStop(0, lighten(col, 10)); lg.addColorStop(0.5, col); lg.addColorStop(1, darken(col, 12));
         ctx.fillStyle = lg; ctx.beginPath(); ctx.moveTo(wx - 15, wy);
         for (let i = 0; i <= 10; i++) { const t = i / 10; ctx.lineTo(wx - 15 - 20 * Math.sin(t * Math.PI * 0.5), wy + (wh + 18) * t); }
         ctx.lineTo(wx - 35, wy); ctx.fill();
-        // Right
         const rg = ctx.createLinearGradient(wx + ww + 15, wy, wx + ww + 35, wy + wh);
         rg.addColorStop(0, lighten(col, 10)); rg.addColorStop(0.5, col); rg.addColorStop(1, darken(col, 12));
         ctx.fillStyle = rg; ctx.beginPath(); ctx.moveTo(wx + ww + 15, wy);
         for (let i = 0; i <= 10; i++) { const t = i / 10; ctx.lineTo(wx + ww + 15 + 20 * Math.sin(t * Math.PI * 0.5), wy + (wh + 18) * t); }
         ctx.lineTo(wx + ww + 35, wy); ctx.fill();
-        // Rod
         ctx.globalAlpha = 0.7; ctx.fillStyle = '#C8960B';
         ctx.beginPath(); ctx.roundRect(wx - 40, wy - 4, ww + 80, 5, 2); ctx.fill();
         ctx.beginPath(); ctx.arc(wx - 40, wy - 1.5, 6, 0, Math.PI * 2); ctx.fill();
@@ -405,7 +358,6 @@ export function initSlider() {
         }
         ctx.restore();
 
-        // Style overlay
         ctx.save();
         const th = appState.designTheme;
         if (th === 'modern-luxury') { ctx.globalCompositeOperation = 'soft-light'; ctx.fillStyle = 'rgba(40,20,60,0.12)'; ctx.fillRect(0, 0, w, h); }
@@ -413,7 +365,6 @@ export function initSlider() {
         else if (th === 'boho') { ctx.globalCompositeOperation = 'overlay'; ctx.fillStyle = 'rgba(200,150,100,0.08)'; ctx.fillRect(0, 0, w, h); }
         ctx.restore();
 
-        // Contrast boost
         if (appState.style === 'modern' || appState.style === 'contemporary') {
             const id = ctx.getImageData(0, 0, w, h); const dd = id.data;
             for (let i = 0; i < dd.length; i += 4) {
@@ -441,24 +392,6 @@ export function initSlider() {
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText('✨ AI Enhanced by GruhaBuddy', bx + bw / 2, by + bh / 2);
         ctx.restore();
-    }
-
-    function initDragSlider() {
-        let isDragging = false;
-        const onMove = (clientX: number) => {
-            const rect = slider.getBoundingClientRect();
-            let pct = ((clientX - rect.left) / rect.width) * 100;
-            pct = Math.max(2, Math.min(98, pct));
-            afterDiv.style.clipPath = `inset(0 0 0 ${pct}%)`;
-            handle.style.left = `${pct}%`;
-        };
-        handle.addEventListener('mousedown', () => isDragging = true);
-        handle.addEventListener('touchstart', () => isDragging = true);
-        window.addEventListener('mouseup', () => isDragging = false);
-        window.addEventListener('touchend', () => isDragging = false);
-        window.addEventListener('mousemove', e => { if (isDragging) onMove(e.clientX); });
-        window.addEventListener('touchmove', e => { if (isDragging) onMove(e.touches[0].clientX); });
-        slider.addEventListener('click', e => onMove(e.clientX));
     }
 
     // Helpers

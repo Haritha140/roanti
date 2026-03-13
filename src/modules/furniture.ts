@@ -1,4 +1,3 @@
-import * as THREE from 'three';
 import { appState, emitEvent, onEvent, showToast } from '../main';
 
 interface ColorOption { name: string; hex: string; }
@@ -10,9 +9,10 @@ interface FurnitureItem {
     description: string; material: string; rating: number; reviews: number;
     colorOptions: ColorOption[]; selectedColor: string;
     materials: MaterialOption[]; selectedMaterial: string;
+    image: string; // product image URL
 }
 
-// 40 color options
+// 42 color options
 const UNIVERSAL_COLORS: ColorOption[] = [
     { name: 'Snow White', hex: '#FFFAFA' }, { name: 'Ivory', hex: '#FFFFF0' }, { name: 'Cream', hex: '#F5E6C8' },
     { name: 'Linen', hex: '#FAF0E6' }, { name: 'Alabaster', hex: '#F2F0EB' }, { name: 'Pearl', hex: '#EAE0C8' },
@@ -62,42 +62,66 @@ function getColorsForCategory(category: string): ColorOption[] {
     return sorted;
 }
 
+// High-quality furniture product images (using Unsplash/Pexels for items without local images)
+const PRODUCT_IMAGES: Record<string, string> = {
+    'l-sofa1': './furniture/sofa-lshape.png',
+    'l-sofa2': './furniture/sofa-chesterfield.png',
+    'l-sofa3': './furniture/sofa-scandinavian.png',
+    'l-ctable': './furniture/coffee-table.png',
+    'l-tvunit': 'https://images.unsplash.com/photo-1593784991095-a205069470b6?w=600&h=400&fit=crop&q=80',
+    'l-lamp1': './furniture/floor-lamp.png',
+    'l-curtain': 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=600&h=400&fit=crop&q=80',
+    'l-rug': 'https://images.unsplash.com/photo-1600166898405-da9535204843?w=600&h=400&fit=crop&q=80',
+    'l-shelf': 'https://images.unsplash.com/photo-1594620302200-9a762244a156?w=600&h=400&fit=crop&q=80',
+    'l-side': 'https://images.unsplash.com/photo-1532372576444-dda954194ad0?w=600&h=400&fit=crop&q=80',
+    'b-bed1': './furniture/king-bed.png',
+    'b-bed2': 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=600&h=400&fit=crop&q=80',
+    'b-night': 'https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=600&h=400&fit=crop&q=80',
+    'b-ward': 'https://images.unsplash.com/photo-1558997519-83ea9252edf8?w=600&h=400&fit=crop&q=80',
+    'b-lamp': 'https://images.unsplash.com/photo-1507473885765-e6ed057ab6fe?w=600&h=400&fit=crop&q=80',
+    'k-dtable': 'https://images.unsplash.com/photo-1617806118233-18e1de247200?w=600&h=400&fit=crop&q=80',
+    'k-chairs': 'https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=600&h=400&fit=crop&q=80',
+    'k-pendant': 'https://images.unsplash.com/photo-1524484485831-a92ffc0de03f?w=600&h=400&fit=crop&q=80',
+    'k-shelf': 'https://images.unsplash.com/photo-1597072689227-8882273e8f6a?w=600&h=400&fit=crop&q=80',
+    'w-desk': 'https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?w=600&h=400&fit=crop&q=80',
+    'w-chair': 'https://images.unsplash.com/photo-1580480055273-228ff5388ef8?w=600&h=400&fit=crop&q=80',
+    'w-lamp': 'https://images.unsplash.com/photo-1534105615256-13940a56ff44?w=600&h=400&fit=crop&q=80',
+    'w-filing': 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=600&h=400&fit=crop&q=80',
+};
+
 const FURNITURE_DB: FurnitureItem[] = [
     // LIVING ROOM
-    { id: 'l-sofa1', name: 'KÖRNBERG L-Shaped Sofa', sku: 'KB-2450', category: 'sofa', roomTypes: ['living'], price: 45000, budgetPrice: 28000, dims: '250×160×85', dimW: 250, dimD: 160, dimH: 85, description: 'Premium fabric L-shaped sofa with reversible chaise & memory foam cushions', material: 'Fabric', rating: 4.7, reviews: 342, colorOptions: getColorsForCategory('sofa'), selectedColor: '#556B2F', materials: MATERIAL_OPTIONS, selectedMaterial: 'fabric' },
-    { id: 'l-sofa2', name: 'ELDHUS Chesterfield Sofa', sku: 'EH-1890', category: 'sofa', roomTypes: ['living'], price: 65000, budgetPrice: 38000, dims: '220×90×80', dimW: 220, dimD: 90, dimH: 80, description: 'Classic tufted chesterfield with hand-stitched leather & rolled arms', material: 'Leather', rating: 4.9, reviews: 187, colorOptions: getColorsForCategory('sofa'), selectedColor: '#5C4033', materials: MATERIAL_OPTIONS, selectedMaterial: 'leather' },
-    { id: 'l-sofa3', name: 'VÄSTRA 3-Seater', sku: 'VS-1200', category: 'sofa', roomTypes: ['living'], price: 32000, budgetPrice: 18000, dims: '200×85×75', dimW: 200, dimD: 85, dimH: 75, description: 'Clean Scandinavian minimal sofa with oak legs', material: 'Fabric', rating: 4.5, reviews: 521, colorOptions: getColorsForCategory('sofa'), selectedColor: '#A9A9A9', materials: MATERIAL_OPTIONS, selectedMaterial: 'fabric' },
-    { id: 'l-ctable', name: 'BJÖRK Coffee Table', sku: 'BJ-0880', category: 'table', roomTypes: ['living'], price: 12000, budgetPrice: 6000, dims: '110×60×42', dimW: 110, dimD: 60, dimH: 42, description: 'Solid oak coffee table with powder-coated steel hairpin legs', material: 'Wood', rating: 4.6, reviews: 892, colorOptions: getColorsForCategory('table'), selectedColor: '#5C4033', materials: MATERIAL_OPTIONS, selectedMaterial: 'wood' },
-    { id: 'l-tvunit', name: 'STRÖM TV Console', sku: 'SM-1650', category: 'storage', roomTypes: ['living'], price: 25000, budgetPrice: 12000, dims: '180×45×55', dimW: 180, dimD: 45, dimH: 55, description: 'Modern floating TV unit with integrated cable management system', material: 'Matte', rating: 4.4, reviews: 234, colorOptions: getColorsForCategory('storage'), selectedColor: '#F5F5F0', materials: MATERIAL_OPTIONS, selectedMaterial: 'matte' },
-    { id: 'l-lamp1', name: 'LYSA Arc Floor Lamp', sku: 'LY-0450', category: 'lighting', roomTypes: ['living', 'bedroom'], price: 8500, budgetPrice: 3500, dims: '40×40×180', dimW: 40, dimD: 40, dimH: 180, description: 'Tall arc floor lamp with dimmable warm LED & marble base', material: 'Metal', rating: 4.8, reviews: 156, colorOptions: getColorsForCategory('lighting'), selectedColor: '#1C1C1C', materials: MATERIAL_OPTIONS, selectedMaterial: 'metal' },
-    { id: 'l-curtain', name: 'SILKE Sheer Curtains', sku: 'SK-0320', category: 'curtain', roomTypes: ['living', 'bedroom', 'workspace'], price: 6000, budgetPrice: 2500, dims: 'Full window', dimW: 150, dimD: 1, dimH: 260, description: 'Elegant sheer curtains with thermal lining & blackout layer', material: 'Fabric', rating: 4.3, reviews: 678, colorOptions: getColorsForCategory('curtain'), selectedColor: '#FFFAF0', materials: MATERIAL_OPTIONS, selectedMaterial: 'fabric' },
-    { id: 'l-rug', name: 'FÄLT Area Rug', sku: 'FT-0750', category: 'decor', roomTypes: ['living', 'bedroom'], price: 15000, budgetPrice: 5000, dims: '200×140', dimW: 200, dimD: 140, dimH: 2, description: 'Hand-tufted wool area rug with anti-slip backing', material: 'Fabric', rating: 4.6, reviews: 445, colorOptions: getColorsForCategory('decor'), selectedColor: '#D4B896', materials: MATERIAL_OPTIONS, selectedMaterial: 'fabric' },
-    { id: 'l-shelf', name: 'HYLLA Bookshelf', sku: 'HY-0920', category: 'storage', roomTypes: ['living', 'workspace'], price: 18000, budgetPrice: 8000, dims: '90×35×180', dimW: 90, dimD: 35, dimH: 180, description: 'Open 5-tier bookshelf with solid pine & steel frame', material: 'Wood', rating: 4.5, reviews: 312, colorOptions: getColorsForCategory('storage'), selectedColor: '#C4A882', materials: MATERIAL_OPTIONS, selectedMaterial: 'wood' },
-    { id: 'l-side', name: 'RUND Side Table', sku: 'RD-0380', category: 'table', roomTypes: ['living', 'bedroom'], price: 7000, budgetPrice: 3000, dims: '45×45×55', dimW: 45, dimD: 45, dimH: 55, description: 'Round side table with tempered glass top & brass legs', material: 'Metal', rating: 4.4, reviews: 267, colorOptions: getColorsForCategory('table'), selectedColor: '#B8860B', materials: MATERIAL_OPTIONS, selectedMaterial: 'glossy' },
+    { id: 'l-sofa1', name: 'KÖRNBERG L-Shaped Sofa', sku: 'KB-2450', category: 'sofa', roomTypes: ['living'], price: 45000, budgetPrice: 28000, dims: '250×160×85', dimW: 250, dimD: 160, dimH: 85, description: 'Premium fabric L-shaped sofa with reversible chaise & memory foam cushions', material: 'Fabric', rating: 4.7, reviews: 342, colorOptions: getColorsForCategory('sofa'), selectedColor: '#556B2F', materials: MATERIAL_OPTIONS, selectedMaterial: 'fabric', image: PRODUCT_IMAGES['l-sofa1'] },
+    { id: 'l-sofa2', name: 'ELDHUS Chesterfield Sofa', sku: 'EH-1890', category: 'sofa', roomTypes: ['living'], price: 65000, budgetPrice: 38000, dims: '220×90×80', dimW: 220, dimD: 90, dimH: 80, description: 'Classic tufted chesterfield with hand-stitched leather & rolled arms', material: 'Leather', rating: 4.9, reviews: 187, colorOptions: getColorsForCategory('sofa'), selectedColor: '#5C4033', materials: MATERIAL_OPTIONS, selectedMaterial: 'leather', image: PRODUCT_IMAGES['l-sofa2'] },
+    { id: 'l-sofa3', name: 'VÄSTRA 3-Seater', sku: 'VS-1200', category: 'sofa', roomTypes: ['living'], price: 32000, budgetPrice: 18000, dims: '200×85×75', dimW: 200, dimD: 85, dimH: 75, description: 'Clean Scandinavian minimal sofa with oak legs', material: 'Fabric', rating: 4.5, reviews: 521, colorOptions: getColorsForCategory('sofa'), selectedColor: '#A9A9A9', materials: MATERIAL_OPTIONS, selectedMaterial: 'fabric', image: PRODUCT_IMAGES['l-sofa3'] },
+    { id: 'l-ctable', name: 'BJÖRK Coffee Table', sku: 'BJ-0880', category: 'table', roomTypes: ['living'], price: 12000, budgetPrice: 6000, dims: '110×60×42', dimW: 110, dimD: 60, dimH: 42, description: 'Solid oak coffee table with powder-coated steel hairpin legs', material: 'Wood', rating: 4.6, reviews: 892, colorOptions: getColorsForCategory('table'), selectedColor: '#5C4033', materials: MATERIAL_OPTIONS, selectedMaterial: 'wood', image: PRODUCT_IMAGES['l-ctable'] },
+    { id: 'l-tvunit', name: 'STRÖM TV Console', sku: 'SM-1650', category: 'storage', roomTypes: ['living'], price: 25000, budgetPrice: 12000, dims: '180×45×55', dimW: 180, dimD: 45, dimH: 55, description: 'Modern floating TV unit with integrated cable management system', material: 'Matte', rating: 4.4, reviews: 234, colorOptions: getColorsForCategory('storage'), selectedColor: '#F5F5F0', materials: MATERIAL_OPTIONS, selectedMaterial: 'matte', image: PRODUCT_IMAGES['l-tvunit'] },
+    { id: 'l-lamp1', name: 'LYSA Arc Floor Lamp', sku: 'LY-0450', category: 'lighting', roomTypes: ['living', 'bedroom'], price: 8500, budgetPrice: 3500, dims: '40×40×180', dimW: 40, dimD: 40, dimH: 180, description: 'Tall arc floor lamp with dimmable warm LED & marble base', material: 'Metal', rating: 4.8, reviews: 156, colorOptions: getColorsForCategory('lighting'), selectedColor: '#1C1C1C', materials: MATERIAL_OPTIONS, selectedMaterial: 'metal', image: PRODUCT_IMAGES['l-lamp1'] },
+    { id: 'l-curtain', name: 'SILKE Sheer Curtains', sku: 'SK-0320', category: 'curtain', roomTypes: ['living', 'bedroom', 'workspace'], price: 6000, budgetPrice: 2500, dims: 'Full window', dimW: 150, dimD: 1, dimH: 260, description: 'Elegant sheer curtains with thermal lining & blackout layer', material: 'Fabric', rating: 4.3, reviews: 678, colorOptions: getColorsForCategory('curtain'), selectedColor: '#FFFAF0', materials: MATERIAL_OPTIONS, selectedMaterial: 'fabric', image: PRODUCT_IMAGES['l-curtain'] },
+    { id: 'l-rug', name: 'FÄLT Area Rug', sku: 'FT-0750', category: 'decor', roomTypes: ['living', 'bedroom'], price: 15000, budgetPrice: 5000, dims: '200×140', dimW: 200, dimD: 140, dimH: 2, description: 'Hand-tufted wool area rug with anti-slip backing', material: 'Fabric', rating: 4.6, reviews: 445, colorOptions: getColorsForCategory('decor'), selectedColor: '#D4B896', materials: MATERIAL_OPTIONS, selectedMaterial: 'fabric', image: PRODUCT_IMAGES['l-rug'] },
+    { id: 'l-shelf', name: 'HYLLA Bookshelf', sku: 'HY-0920', category: 'storage', roomTypes: ['living', 'workspace'], price: 18000, budgetPrice: 8000, dims: '90×35×180', dimW: 90, dimD: 35, dimH: 180, description: 'Open 5-tier bookshelf with solid pine & steel frame', material: 'Wood', rating: 4.5, reviews: 312, colorOptions: getColorsForCategory('storage'), selectedColor: '#C4A882', materials: MATERIAL_OPTIONS, selectedMaterial: 'wood', image: PRODUCT_IMAGES['l-shelf'] },
+    { id: 'l-side', name: 'RUND Side Table', sku: 'RD-0380', category: 'table', roomTypes: ['living', 'bedroom'], price: 7000, budgetPrice: 3000, dims: '45×45×55', dimW: 45, dimD: 45, dimH: 55, description: 'Round side table with tempered glass top & brass legs', material: 'Metal', rating: 4.4, reviews: 267, colorOptions: getColorsForCategory('table'), selectedColor: '#B8860B', materials: MATERIAL_OPTIONS, selectedMaterial: 'glossy', image: PRODUCT_IMAGES['l-side'] },
     // BEDROOM
-    { id: 'b-bed1', name: 'DRÖM King Bed Frame', sku: 'DM-2200', category: 'bed', roomTypes: ['bedroom'], price: 55000, budgetPrice: 30000, dims: '200×180×40', dimW: 200, dimD: 180, dimH: 40, description: 'Upholstered king bed with hydraulic storage & USB charging', material: 'Fabric', rating: 4.8, reviews: 423, colorOptions: getColorsForCategory('bed'), selectedColor: '#6B6B6B', materials: MATERIAL_OPTIONS, selectedMaterial: 'fabric' },
-    { id: 'b-bed2', name: 'NATT Queen Platform', sku: 'NT-1650', category: 'bed', roomTypes: ['bedroom'], price: 38000, budgetPrice: 20000, dims: '190×150×35', dimW: 190, dimD: 150, dimH: 35, description: 'Low platform bed, Japanese-inspired solid oak design', material: 'Wood', rating: 4.7, reviews: 298, colorOptions: getColorsForCategory('bed'), selectedColor: '#5C4033', materials: MATERIAL_OPTIONS, selectedMaterial: 'wood' },
-    { id: 'b-night', name: 'LUGN Nightstand', sku: 'LG-0480', category: 'table', roomTypes: ['bedroom'], price: 8000, budgetPrice: 3500, dims: '50×40×55', dimW: 50, dimD: 40, dimH: 55, description: 'Bedside nightstand with soft-close drawer & wireless charging top', material: 'Wood', rating: 4.6, reviews: 534, colorOptions: getColorsForCategory('table'), selectedColor: '#F5F5F0', materials: MATERIAL_OPTIONS, selectedMaterial: 'wood' },
-    { id: 'b-ward', name: 'GARDEROB Wardrobe', sku: 'GB-3200', category: 'storage', roomTypes: ['bedroom'], price: 45000, budgetPrice: 22000, dims: '180×60×210', dimW: 180, dimD: 60, dimH: 210, description: 'Sliding door wardrobe with full-length mirror & LED interior', material: 'Wood', rating: 4.5, reviews: 189, colorOptions: getColorsForCategory('storage'), selectedColor: '#F5F5F0', materials: MATERIAL_OPTIONS, selectedMaterial: 'wood' },
-    { id: 'b-lamp', name: 'LJUS Bedside Lamp', sku: 'LJ-0180', category: 'lighting', roomTypes: ['bedroom'], price: 3500, budgetPrice: 1200, dims: '25×25×45', dimW: 25, dimD: 25, dimH: 45, description: 'Ceramic table lamp with linen shade & touch dimmer', material: 'Ceramic', rating: 4.7, reviews: 890, colorOptions: getColorsForCategory('lighting'), selectedColor: '#F5E6C8', materials: MATERIAL_OPTIONS, selectedMaterial: 'matte' },
+    { id: 'b-bed1', name: 'DRÖM King Bed Frame', sku: 'DM-2200', category: 'bed', roomTypes: ['bedroom'], price: 55000, budgetPrice: 30000, dims: '200×180×40', dimW: 200, dimD: 180, dimH: 40, description: 'Upholstered king bed with hydraulic storage & USB charging', material: 'Fabric', rating: 4.8, reviews: 423, colorOptions: getColorsForCategory('bed'), selectedColor: '#6B6B6B', materials: MATERIAL_OPTIONS, selectedMaterial: 'fabric', image: PRODUCT_IMAGES['b-bed1'] },
+    { id: 'b-bed2', name: 'NATT Queen Platform', sku: 'NT-1650', category: 'bed', roomTypes: ['bedroom'], price: 38000, budgetPrice: 20000, dims: '190×150×35', dimW: 190, dimD: 150, dimH: 35, description: 'Low platform bed, Japanese-inspired solid oak design', material: 'Wood', rating: 4.7, reviews: 298, colorOptions: getColorsForCategory('bed'), selectedColor: '#5C4033', materials: MATERIAL_OPTIONS, selectedMaterial: 'wood', image: PRODUCT_IMAGES['b-bed2'] },
+    { id: 'b-night', name: 'LUGN Nightstand', sku: 'LG-0480', category: 'table', roomTypes: ['bedroom'], price: 8000, budgetPrice: 3500, dims: '50×40×55', dimW: 50, dimD: 40, dimH: 55, description: 'Bedside nightstand with soft-close drawer & wireless charging top', material: 'Wood', rating: 4.6, reviews: 534, colorOptions: getColorsForCategory('table'), selectedColor: '#F5F5F0', materials: MATERIAL_OPTIONS, selectedMaterial: 'wood', image: PRODUCT_IMAGES['b-night'] },
+    { id: 'b-ward', name: 'GARDEROB Wardrobe', sku: 'GB-3200', category: 'storage', roomTypes: ['bedroom'], price: 45000, budgetPrice: 22000, dims: '180×60×210', dimW: 180, dimD: 60, dimH: 210, description: 'Sliding door wardrobe with full-length mirror & LED interior', material: 'Wood', rating: 4.5, reviews: 189, colorOptions: getColorsForCategory('storage'), selectedColor: '#F5F5F0', materials: MATERIAL_OPTIONS, selectedMaterial: 'wood', image: PRODUCT_IMAGES['b-ward'] },
+    { id: 'b-lamp', name: 'LJUS Bedside Lamp', sku: 'LJ-0180', category: 'lighting', roomTypes: ['bedroom'], price: 3500, budgetPrice: 1200, dims: '25×25×45', dimW: 25, dimD: 25, dimH: 45, description: 'Ceramic table lamp with linen shade & touch dimmer', material: 'Ceramic', rating: 4.7, reviews: 890, colorOptions: getColorsForCategory('lighting'), selectedColor: '#F5E6C8', materials: MATERIAL_OPTIONS, selectedMaterial: 'matte', image: PRODUCT_IMAGES['b-lamp'] },
     // KITCHEN
-    { id: 'k-dtable', name: 'MATSAL Dining Table', sku: 'MS-1800', category: 'table', roomTypes: ['kitchen'], price: 35000, budgetPrice: 15000, dims: '150×90×75', dimW: 150, dimD: 90, dimH: 75, description: '6-seater extendable dining table with butterfly leaf mechanism', material: 'Wood', rating: 4.6, reviews: 356, colorOptions: getColorsForCategory('table'), selectedColor: '#C4A882', materials: MATERIAL_OPTIONS, selectedMaterial: 'wood' },
-    { id: 'k-chairs', name: 'STOL Dining Chairs (×4)', sku: 'ST-0950', category: 'sofa', roomTypes: ['kitchen'], price: 20000, budgetPrice: 10000, dims: '45×50×85', dimW: 45, dimD: 50, dimH: 85, description: 'Upholstered dining chairs with ergonomic backrest, stackable', material: 'Fabric', rating: 4.4, reviews: 445, colorOptions: getColorsForCategory('sofa'), selectedColor: '#808080', materials: MATERIAL_OPTIONS, selectedMaterial: 'fabric' },
-    { id: 'k-pendant', name: 'GLOB Pendant Set (×3)', sku: 'GL-0560', category: 'lighting', roomTypes: ['kitchen'], price: 12000, budgetPrice: 4500, dims: '25×25×40', dimW: 25, dimD: 25, dimH: 40, description: 'Modern globe pendants with adjustable drop height & warm LED', material: 'Metal', rating: 4.8, reviews: 234, colorOptions: getColorsForCategory('lighting'), selectedColor: '#B8860B', materials: MATERIAL_OPTIONS, selectedMaterial: 'glossy' },
-    { id: 'k-shelf', name: 'VÄGG Wall Shelf', sku: 'VG-0350', category: 'storage', roomTypes: ['kitchen'], price: 8000, budgetPrice: 3000, dims: '90×25×4', dimW: 90, dimD: 25, dimH: 4, description: 'Floating kitchen shelf, solid pine with invisible brackets', material: 'Wood', rating: 4.3, reviews: 567, colorOptions: getColorsForCategory('storage'), selectedColor: '#8B6F47', materials: MATERIAL_OPTIONS, selectedMaterial: 'wood' },
+    { id: 'k-dtable', name: 'MATSAL Dining Table', sku: 'MS-1800', category: 'table', roomTypes: ['kitchen'], price: 35000, budgetPrice: 15000, dims: '150×90×75', dimW: 150, dimD: 90, dimH: 75, description: '6-seater extendable dining table with butterfly leaf mechanism', material: 'Wood', rating: 4.6, reviews: 356, colorOptions: getColorsForCategory('table'), selectedColor: '#C4A882', materials: MATERIAL_OPTIONS, selectedMaterial: 'wood', image: PRODUCT_IMAGES['k-dtable'] },
+    { id: 'k-chairs', name: 'STOL Dining Chairs (×4)', sku: 'ST-0950', category: 'sofa', roomTypes: ['kitchen'], price: 20000, budgetPrice: 10000, dims: '45×50×85', dimW: 45, dimD: 50, dimH: 85, description: 'Upholstered dining chairs with ergonomic backrest, stackable', material: 'Fabric', rating: 4.4, reviews: 445, colorOptions: getColorsForCategory('sofa'), selectedColor: '#808080', materials: MATERIAL_OPTIONS, selectedMaterial: 'fabric', image: PRODUCT_IMAGES['k-chairs'] },
+    { id: 'k-pendant', name: 'GLOB Pendant Set (×3)', sku: 'GL-0560', category: 'lighting', roomTypes: ['kitchen'], price: 12000, budgetPrice: 4500, dims: '25×25×40', dimW: 25, dimD: 25, dimH: 40, description: 'Modern globe pendants with adjustable drop height & warm LED', material: 'Metal', rating: 4.8, reviews: 234, colorOptions: getColorsForCategory('lighting'), selectedColor: '#B8860B', materials: MATERIAL_OPTIONS, selectedMaterial: 'glossy', image: PRODUCT_IMAGES['k-pendant'] },
+    { id: 'k-shelf', name: 'VÄGG Wall Shelf', sku: 'VG-0350', category: 'storage', roomTypes: ['kitchen'], price: 8000, budgetPrice: 3000, dims: '90×25×4', dimW: 90, dimD: 25, dimH: 4, description: 'Floating kitchen shelf, solid pine with invisible brackets', material: 'Wood', rating: 4.3, reviews: 567, colorOptions: getColorsForCategory('storage'), selectedColor: '#8B6F47', materials: MATERIAL_OPTIONS, selectedMaterial: 'wood', image: PRODUCT_IMAGES['k-shelf'] },
     // WORKSPACE
-    { id: 'w-desk', name: 'ARBETE Executive Desk', sku: 'AB-1500', category: 'table', roomTypes: ['workspace'], price: 28000, budgetPrice: 12000, dims: '150×70×75', dimW: 150, dimD: 70, dimH: 75, description: 'Large L-shaped desk with integrated cable tray & power hub', material: 'Wood', rating: 4.7, reviews: 423, colorOptions: getColorsForCategory('table'), selectedColor: '#5C4033', materials: MATERIAL_OPTIONS, selectedMaterial: 'wood' },
-    { id: 'w-chair', name: 'KOMFORT Ergo Chair', sku: 'KF-0880', category: 'sofa', roomTypes: ['workspace'], price: 22000, budgetPrice: 8000, dims: '65×65×120', dimW: 65, dimD: 65, dimH: 120, description: 'Full mesh ergonomic chair with 4D armrests & lumbar support', material: 'Mesh', rating: 4.9, reviews: 678, colorOptions: getColorsForCategory('sofa'), selectedColor: '#1C1C1C', materials: MATERIAL_OPTIONS, selectedMaterial: 'fabric' },
-    { id: 'w-lamp', name: 'FOKUS LED Desk Lamp', sku: 'FK-0220', category: 'lighting', roomTypes: ['workspace'], price: 4500, budgetPrice: 1800, dims: '20×20×50', dimW: 20, dimD: 20, dimH: 50, description: 'Adjustable LED desk lamp with 5 brightness levels & USB port', material: 'Metal', rating: 4.6, reviews: 890, colorOptions: getColorsForCategory('lighting'), selectedColor: '#F5F5F0', materials: MATERIAL_OPTIONS, selectedMaterial: 'matte' },
-    { id: 'w-filing', name: 'ORDNING Filing Cabinet', sku: 'ON-0650', category: 'storage', roomTypes: ['workspace'], price: 12000, budgetPrice: 5000, dims: '40×50×65', dimW: 40, dimD: 50, dimH: 65, description: '3-drawer filing cabinet with lock & smooth-glide casters', material: 'Metal', rating: 4.3, reviews: 234, colorOptions: getColorsForCategory('storage'), selectedColor: '#F5F5F0', materials: MATERIAL_OPTIONS, selectedMaterial: 'matte' },
+    { id: 'w-desk', name: 'ARBETE Executive Desk', sku: 'AB-1500', category: 'table', roomTypes: ['workspace'], price: 28000, budgetPrice: 12000, dims: '150×70×75', dimW: 150, dimD: 70, dimH: 75, description: 'Large L-shaped desk with integrated cable tray & power hub', material: 'Wood', rating: 4.7, reviews: 423, colorOptions: getColorsForCategory('table'), selectedColor: '#5C4033', materials: MATERIAL_OPTIONS, selectedMaterial: 'wood', image: PRODUCT_IMAGES['w-desk'] },
+    { id: 'w-chair', name: 'KOMFORT Ergo Chair', sku: 'KF-0880', category: 'sofa', roomTypes: ['workspace'], price: 22000, budgetPrice: 8000, dims: '65×65×120', dimW: 65, dimD: 65, dimH: 120, description: 'Full mesh ergonomic chair with 4D armrests & lumbar support', material: 'Mesh', rating: 4.9, reviews: 678, colorOptions: getColorsForCategory('sofa'), selectedColor: '#1C1C1C', materials: MATERIAL_OPTIONS, selectedMaterial: 'fabric', image: PRODUCT_IMAGES['w-chair'] },
+    { id: 'w-lamp', name: 'FOKUS LED Desk Lamp', sku: 'FK-0220', category: 'lighting', roomTypes: ['workspace'], price: 4500, budgetPrice: 1800, dims: '20×20×50', dimW: 20, dimD: 20, dimH: 50, description: 'Adjustable LED desk lamp with 5 brightness levels & USB port', material: 'Metal', rating: 4.6, reviews: 890, colorOptions: getColorsForCategory('lighting'), selectedColor: '#F5F5F0', materials: MATERIAL_OPTIONS, selectedMaterial: 'matte', image: PRODUCT_IMAGES['w-lamp'] },
+    { id: 'w-filing', name: 'ORDNING Filing Cabinet', sku: 'ON-0650', category: 'storage', roomTypes: ['workspace'], price: 12000, budgetPrice: 5000, dims: '40×50×65', dimW: 40, dimD: 50, dimH: 65, description: '3-drawer filing cabinet with lock & smooth-glide casters', material: 'Metal', rating: 4.3, reviews: 234, colorOptions: getColorsForCategory('storage'), selectedColor: '#F5F5F0', materials: MATERIAL_OPTIONS, selectedMaterial: 'matte', image: PRODUCT_IMAGES['w-filing'] },
 ];
 
 let activeFilter = 'all';
 let useBudgetPrices = false;
 let expandedColorId: string | null = null;
-
-// 3D preview renderers stored per card
-const miniRenderers: Map<string, { renderer: THREE.WebGLRenderer; scene: THREE.Scene; camera: THREE.PerspectiveCamera; angle: number; isDragging: boolean; lastX: number; }> = new Map();
 
 export function initFurniture() {
     const gridEl = document.getElementById('furniture-grid')!;
@@ -148,10 +172,6 @@ export function initFurniture() {
     }
 
     function renderGrid() {
-        // Dispose old renderers
-        miniRenderers.forEach(r => { r.renderer.dispose(); });
-        miniRenderers.clear();
-
         const items = getFilteredItems();
         gridEl.innerHTML = items.map(item => {
             const isAdded = appState.selectedFurniture.some(f => f.id === item.id);
@@ -161,20 +181,26 @@ export function initFurniture() {
             const showExpanded = expandedColorId === item.id;
             const visibleColors = showExpanded ? item.colorOptions : item.colorOptions.slice(0, 8);
             const hasMore = item.colorOptions.length > 8 && !showExpanded;
+            const currentMatName = item.materials.find(m => m.type === item.selectedMaterial)?.name || item.material;
+            const currentMatTexture = item.materials.find(m => m.type === item.selectedMaterial)?.texture || '';
 
             return `<div class="furniture-card ${isAdded ? 'selected-card' : ''}" data-id="${item.id}">
         <div class="furniture-preview">
-          <canvas id="fcanvas-${item.id}" width="400" height="280"></canvas>
+          <img src="${item.image}" alt="${item.name}" class="furniture-product-img" loading="lazy"
+               onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+          <div class="furniture-img-fallback" style="display:none;">
+            <span class="fallback-icon">${item.category === 'sofa' ? '🛋️' : item.category === 'bed' ? '🛏️' : item.category === 'table' ? '🪑' : item.category === 'lighting' ? '💡' : item.category === 'curtain' ? '🪟' : item.category === 'storage' ? '📦' : '🎨'}</span>
+            <span class="fallback-name">${item.name}</span>
+          </div>
           <span class="furniture-sku">${item.sku}</span>
           <span class="furniture-badge">${item.category}</span>
-          <span class="rotate-hint">↻ Drag to rotate</span>
         </div>
         <div class="furniture-info">
           <div class="furniture-rating">${renderStars(item.rating)} <span class="review-count">(${item.reviews})</span></div>
           <h4>${item.name}</h4>
           <div class="furniture-meta">
             <span>📐 ${item.dims} cm</span>
-            <span>${item.materials.find(m => m.type === item.selectedMaterial)?.texture || ''} ${item.materials.find(m => m.type === item.selectedMaterial)?.name || item.material}</span>
+            <span>${currentMatTexture} ${currentMatName}</span>
           </div>
           <p class="furniture-desc">${item.description}</p>
           <div class="furniture-material-row">
@@ -200,9 +226,6 @@ export function initFurniture() {
         </div>
       </div>`;
         }).join('');
-
-        // Create 3D previews
-        items.forEach(item => init3DPreview(item));
 
         // Event bindings
         bindCardEvents();
@@ -275,341 +298,6 @@ export function initFurniture() {
                 renderGrid(); renderCart();
             });
         });
-    }
-
-    function init3DPreview(item: FurnitureItem) {
-        const canvas = document.getElementById(`fcanvas-${item.id}`) as HTMLCanvasElement;
-        if (!canvas) return;
-
-        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-        renderer.setSize(400, 280);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 1.2;
-        renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x0d1230);
-
-        const camera = new THREE.PerspectiveCamera(40, 400 / 280, 0.1, 100);
-        camera.position.set(2, 1.5, 2);
-        camera.lookAt(0, 0.3, 0);
-
-        // Studio 3-point lighting
-        scene.add(new THREE.AmbientLight(0xffffff, 0.4));
-
-        // Key light (warm)
-        const keyLight = new THREE.DirectionalLight(0xfff4e6, 1.2);
-        keyLight.position.set(3, 5, 3);
-        keyLight.castShadow = true;
-        scene.add(keyLight);
-
-        // Fill light (cool blue)
-        const fillLight = new THREE.DirectionalLight(0x8090ff, 0.4);
-        fillLight.position.set(-3, 3, -1);
-        scene.add(fillLight);
-
-        // Rim/back light
-        const rimLight = new THREE.DirectionalLight(0xffffff, 0.6);
-        rimLight.position.set(0, 2, -4);
-        scene.add(rimLight);
-
-        // Hemisphere light for subtle environment
-        const hemiLight = new THREE.HemisphereLight(0xddeeff, 0x202040, 0.3);
-        scene.add(hemiLight);
-
-        // Floor
-        const floorGeo = new THREE.PlaneGeometry(5, 5);
-        const floorMat = new THREE.MeshStandardMaterial({ color: 0x151a42, roughness: 0.85, metalness: 0.05 });
-        const floor = new THREE.Mesh(floorGeo, floorMat);
-        floor.rotation.x = -Math.PI / 2;
-        floor.position.y = -0.01;
-        floor.receiveShadow = true;
-        scene.add(floor);
-
-        // Build furniture model
-        const group = buildFurnitureModel(item);
-        scene.add(group);
-
-        const state = { renderer, scene, camera, angle: 0, isDragging: false, lastX: 0 };
-        miniRenderers.set(item.id, state);
-
-        // Drag to rotate
-        canvas.addEventListener('mousedown', (e) => { state.isDragging = true; state.lastX = e.clientX; });
-        canvas.addEventListener('touchstart', (e) => { state.isDragging = true; state.lastX = e.touches[0].clientX; }, { passive: true });
-        window.addEventListener('mouseup', () => { miniRenderers.forEach(s => s.isDragging = false); });
-        window.addEventListener('touchend', () => { miniRenderers.forEach(s => s.isDragging = false); });
-        canvas.addEventListener('mousemove', (e) => {
-            if (!state.isDragging) return;
-            state.angle += (e.clientX - state.lastX) * 0.01;
-            state.lastX = e.clientX;
-        });
-        canvas.addEventListener('touchmove', (e) => {
-            if (!state.isDragging) return;
-            state.angle += (e.touches[0].clientX - state.lastX) * 0.01;
-            state.lastX = e.touches[0].clientX;
-        }, { passive: true });
-
-        // Animate
-        function animate() {
-            if (!miniRenderers.has(item.id)) return;
-            requestAnimationFrame(animate);
-            if (!state.isDragging) state.angle += 0.005;
-            const r = 2.5;
-            camera.position.x = Math.sin(state.angle) * r;
-            camera.position.z = Math.cos(state.angle) * r;
-            camera.position.y = 1.5;
-            camera.lookAt(0, 0.3, 0);
-            renderer.render(scene, camera);
-        }
-        animate();
-    }
-
-    function buildFurnitureModel(item: FurnitureItem): THREE.Group {
-        const g = new THREE.Group();
-        const color = new THREE.Color(item.selectedColor);
-        const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.5, metalness: 0.05 });
-
-        // PBR material adjustments per material type
-        if (item.selectedMaterial === 'leather') {
-            mat.roughness = 0.25; mat.metalness = 0.08;
-            // Subtle sheen for leather look
-            mat.color.offsetHSL(0, 0.05, -0.02);
-        } else if (item.selectedMaterial === 'metal') {
-            mat.roughness = 0.15; mat.metalness = 0.75;
-        } else if (item.selectedMaterial === 'glossy') {
-            mat.roughness = 0.08; mat.metalness = 0.35;
-        } else if (item.selectedMaterial === 'velvet') {
-            mat.roughness = 0.95; mat.metalness = 0;
-        } else if (item.selectedMaterial === 'wood') {
-            mat.roughness = 0.55; mat.metalness = 0;
-        } else if (item.selectedMaterial === 'fabric') {
-            mat.roughness = 0.75; mat.metalness = 0;
-        }
-
-        switch (item.category) {
-            case 'sofa': buildSofa3D(g, mat, item); break;
-            case 'table': buildTable3D(g, mat, item); break;
-            case 'bed': buildBed3D(g, mat, item); break;
-            case 'lighting': buildLamp3D(g, item); break;
-            case 'storage': buildStorage3D(g, mat, item); break;
-            case 'curtain': buildCurtain3D(g, item); break;
-            case 'decor': buildDecor3D(g, item); break;
-        }
-
-        // Add subtle shadow beneath
-        const shadowGeo = new THREE.PlaneGeometry(2.5, 2.5);
-        const shadowMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.15 });
-        const shadow = new THREE.Mesh(shadowGeo, shadowMat);
-        shadow.rotation.x = -Math.PI / 2;
-        shadow.position.y = 0.001;
-        g.add(shadow);
-
-        return g;
-    }
-
-    // Helper: create rounded box (beveled edges)
-    function roundedBox(w: number, h: number, d: number, r: number, segments: number = 2): THREE.BufferGeometry {
-        const shape = new THREE.Shape();
-        const hw = w / 2 - r, hh = h / 2 - r;
-        shape.moveTo(-hw, -h / 2);
-        shape.lineTo(hw, -h / 2);
-        shape.quadraticCurveTo(w / 2, -h / 2, w / 2, -hh);
-        shape.lineTo(w / 2, hh);
-        shape.quadraticCurveTo(w / 2, h / 2, hw, h / 2);
-        shape.lineTo(-hw, h / 2);
-        shape.quadraticCurveTo(-w / 2, h / 2, -w / 2, hh);
-        shape.lineTo(-w / 2, -hh);
-        shape.quadraticCurveTo(-w / 2, -h / 2, -hw, -h / 2);
-        return new THREE.ExtrudeGeometry(shape, { depth: d, bevelEnabled: true, bevelThickness: r * 0.5, bevelSize: r * 0.3, bevelSegments: segments });
-    }
-
-    function buildSofa3D(g: THREE.Group, mat: THREE.MeshStandardMaterial, item: FurnitureItem) {
-        const w = Math.min(item.dimW / 100, 2.2), d = Math.min(item.dimD / 100, 0.9), h = Math.min(item.dimH / 100, 0.9);
-        const isLeather = item.selectedMaterial === 'leather';
-
-        // Base frame (slightly darker)
-        const baseMat = mat.clone(); baseMat.color.offsetHSL(0, 0, -0.12);
-        const baseGeo = roundedBox(w, h * 0.22, d * 0.95, 0.03);
-        const base = new THREE.Mesh(baseGeo, baseMat);
-        base.rotation.x = Math.PI / 2;
-        base.position.set(0, h * 0.11, d * 0.475);
-        base.castShadow = true;
-        g.add(base);
-
-        // Seat cushions (rounded, puffy look)
-        const cushMat = mat.clone();
-        if (isLeather) { cushMat.roughness = 0.2; cushMat.metalness = 0.1; }
-        cushMat.color.offsetHSL(0, 0, 0.04);
-        const nc = item.id.includes('sofa1') ? 3 : item.id.includes('sofa2') ? 2 : 2;
-        const cw = (w - 0.24) / nc;
-        for (let i = 0; i < nc; i++) {
-            const cushGeo = roundedBox(cw - 0.04, 0.12, d * 0.7, 0.025, 3);
-            const cush = new THREE.Mesh(cushGeo, cushMat);
-            cush.rotation.x = Math.PI / 2;
-            cush.position.set(-w / 2 + 0.12 + cw * i + cw / 2, h * 0.28, d * 0.35);
-            cush.castShadow = true;
-            g.add(cush);
-
-            // Leather tufting buttons
-            if (isLeather) {
-                for (let tx = -1; tx <= 1; tx++) {
-                    for (let tz = -1; tz <= 1; tz++) {
-                        const btn = new THREE.Mesh(
-                            new THREE.SphereGeometry(0.012, 8, 8),
-                            new THREE.MeshStandardMaterial({ color: cushMat.color.clone().offsetHSL(0, 0, -0.15), metalness: 0.3, roughness: 0.4 })
-                        );
-                        btn.position.set(
-                            -w / 2 + 0.12 + cw * i + cw / 2 + tx * (cw * 0.25),
-                            h * 0.35,
-                            d * 0.35 + tz * (d * 0.18)
-                        );
-                        g.add(btn);
-                    }
-                }
-            }
-        }
-
-        // Backrest (rounded top)
-        const backMat = mat.clone(); backMat.color.offsetHSL(0, 0, -0.04);
-        if (isLeather) { backMat.roughness = 0.22; backMat.metalness = 0.1; }
-        const backGeo = roundedBox(w, h * 0.42, 0.14, 0.03, 3);
-        const back = new THREE.Mesh(backGeo, backMat);
-        back.rotation.x = Math.PI / 2;
-        back.position.set(0, h * 0.5, 0.07);
-        back.castShadow = true;
-        g.add(back);
-
-        // Back pillows
-        for (let i = 0; i < nc; i++) {
-            const pillowMat = mat.clone(); pillowMat.color.offsetHSL(0, 0.02, 0.08);
-            if (isLeather) { pillowMat.roughness = 0.2; }
-            const pillGeo = roundedBox(cw * 0.7, h * 0.28, 0.1, 0.03, 3);
-            const pill = new THREE.Mesh(pillGeo, pillowMat);
-            pill.rotation.x = Math.PI / 2;
-            pill.position.set(-w / 2 + 0.12 + cw * i + cw / 2, h * 0.52, 0.18);
-            g.add(pill);
-        }
-
-        // Arms (rounded)
-        const armMat = mat.clone(); armMat.color.offsetHSL(0, 0, -0.08);
-        if (isLeather) { armMat.roughness = 0.2; }
-        [-1, 1].forEach(side => {
-            const armGeo = roundedBox(0.1, h * 0.35, d * 0.9, 0.025, 3);
-            const arm = new THREE.Mesh(armGeo, armMat);
-            arm.rotation.x = Math.PI / 2;
-            arm.position.set(side * (w / 2 - 0.05), h * 0.35, d * 0.45);
-            arm.castShadow = true;
-            g.add(arm);
-        });
-
-        // Legs (metal / wood)
-        const legMat = new THREE.MeshStandardMaterial({
-            color: isLeather ? 0x1a1a1a : 0x8B6F47,
-            metalness: isLeather ? 0.7 : 0.1,
-            roughness: isLeather ? 0.2 : 0.5
-        });
-        [[-w / 2 + 0.08, 0.08], [w / 2 - 0.08, 0.08], [-w / 2 + 0.08, d - 0.08], [w / 2 - 0.08, d - 0.08]].forEach(([lx, lz]) => {
-            const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.022, 0.1, 8), legMat);
-            leg.position.set(lx, 0.05, lz);
-            leg.castShadow = true;
-            g.add(leg);
-        });
-    }
-
-    function buildTable3D(g: THREE.Group, mat: THREE.MeshStandardMaterial, item: FurnitureItem) {
-        const w = Math.min(item.dimW / 100, 1.5), d = Math.min(item.dimD / 100, 0.9), h = Math.min(item.dimH / 100, 0.8);
-        const top = new THREE.Mesh(new THREE.BoxGeometry(w, 0.04, d), mat);
-        top.position.y = h; g.add(top);
-
-        const legMat = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.5, roughness: 0.3 });
-        [[-w / 2 + 0.06, -d / 2 + 0.06], [w / 2 - 0.06, -d / 2 + 0.06], [-w / 2 + 0.06, d / 2 - 0.06], [w / 2 - 0.06, d / 2 - 0.06]].forEach(([lx, lz]) => {
-            const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, h - 0.02), legMat);
-            leg.position.set(lx, h / 2, lz); g.add(leg);
-        });
-    }
-
-    function buildBed3D(g: THREE.Group, mat: THREE.MeshStandardMaterial, _item: FurnitureItem) {
-        const frame = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.3, 2.0), mat);
-        frame.position.y = 0.2; g.add(frame);
-
-        const mMat = new THREE.MeshStandardMaterial({ color: 0xF0EDE8, roughness: 0.9 });
-        const mattress = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.18, 1.9), mMat);
-        mattress.position.y = 0.44; g.add(mattress);
-
-        const hbMat = mat.clone(); hbMat.color.offsetHSL(0, 0, -0.1);
-        const hb = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.9, 0.08), hbMat);
-        hb.position.set(0, 0.7, -0.96); g.add(hb);
-
-        const pMat = new THREE.MeshStandardMaterial({ color: 0xFFFAF0, roughness: 0.85 });
-        [-0.45, 0.45].forEach(px => {
-            const p = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.12, 0.35), pMat);
-            p.position.set(px, 0.59, -0.65); g.add(p);
-        });
-    }
-
-    function buildLamp3D(g: THREE.Group, item: FurnitureItem) {
-        const poleMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.7, roughness: 0.3 });
-        if (item.id.includes('lamp1') || item.id.includes('arc')) {
-            g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.18, 0.03), poleMat));
-            const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 1.6), poleMat);
-            pole.position.y = 0.8; g.add(pole);
-            const shade = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.25, 16, 1, true), new THREE.MeshStandardMaterial({ color: 0xF5E6C8, side: THREE.DoubleSide, emissive: 0xF5D49A, emissiveIntensity: 0.3 }));
-            shade.position.y = 1.6; g.add(shade);
-        } else {
-            g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.08, 0.03), new THREE.MeshStandardMaterial({ color: 0xB87333, roughness: 0.4, metalness: 0.3 })));
-            const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.3), new THREE.MeshStandardMaterial({ color: 0xB87333 }));
-            pole.position.y = 0.15; g.add(pole);
-            const shade = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.1, 0.12, 16, 1, true), new THREE.MeshStandardMaterial({ color: 0xF5E6C8, side: THREE.DoubleSide, emissive: 0xF5D49A, emissiveIntensity: 0.3 }));
-            shade.position.y = 0.34; g.add(shade);
-        }
-    }
-
-    function buildStorage3D(g: THREE.Group, mat: THREE.MeshStandardMaterial, item: FurnitureItem) {
-        if (item.id.includes('tvunit') || item.id.includes('tv')) {
-            g.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.4, 0.4), mat), { position: new THREE.Vector3(0, 0.2, 0) }));
-            const tv = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.7, 0.04), new THREE.MeshStandardMaterial({ color: 0x111111 }));
-            tv.position.set(0, 0.8, 0); g.add(tv);
-            const screen = new THREE.Mesh(new THREE.PlaneGeometry(1.15, 0.65), new THREE.MeshStandardMaterial({ color: 0x1a1a4a, emissive: 0x1a1a4a, emissiveIntensity: 0.15 }));
-            screen.position.set(0, 0.8, 0.025); g.add(screen);
-        } else if (item.id.includes('shelf') || item.id.includes('book')) {
-            [-0.43, 0.43].forEach(sx => {
-                const side = new THREE.Mesh(new THREE.BoxGeometry(0.03, 1.8, 0.3), mat);
-                side.position.set(sx, 0.9, 0); g.add(side);
-            });
-            for (let i = 0; i < 5; i++) {
-                const shelf = new THREE.Mesh(new THREE.BoxGeometry(0.86, 0.02, 0.3), mat);
-                shelf.position.set(0, 0.02 + i * 0.44, 0); g.add(shelf);
-            }
-        } else if (item.id.includes('ward')) {
-            const body = new THREE.Mesh(new THREE.BoxGeometry(1.8, 2.1, 0.6), mat);
-            body.position.y = 1.05; g.add(body);
-            const divMat = mat.clone(); divMat.color.offsetHSL(0, 0, -0.05);
-            const div = new THREE.Mesh(new THREE.BoxGeometry(0.02, 2.05, 0.62), divMat);
-            div.position.y = 1.05; g.add(div);
-        } else {
-            const body = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.65, 0.5), mat);
-            body.position.y = 0.33; g.add(body);
-        }
-    }
-
-    function buildCurtain3D(g: THREE.Group, item: FurnitureItem) {
-        const color = new THREE.Color(item.selectedColor);
-        const curtMat = new THREE.MeshStandardMaterial({ color, side: THREE.DoubleSide, transparent: true, opacity: 0.75 });
-        const l = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 1.5), curtMat);
-        l.position.set(-0.5, 0.75, 0); g.add(l);
-        const r = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 1.5), curtMat);
-        r.position.set(0.5, 0.75, 0); g.add(r);
-        const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 1.5), new THREE.MeshStandardMaterial({ color: 0xB8860B, metalness: 0.7 }));
-        rod.rotation.z = Math.PI / 2; rod.position.y = 1.5; g.add(rod);
-    }
-
-    function buildDecor3D(g: THREE.Group, item: FurnitureItem) {
-        if (item.id.includes('rug')) {
-            const rug = new THREE.Mesh(new THREE.PlaneGeometry(2, 1.4), new THREE.MeshStandardMaterial({ color: new THREE.Color(item.selectedColor), roughness: 0.95, side: THREE.DoubleSide }));
-            rug.rotation.x = -Math.PI / 2; rug.position.y = 0.01; g.add(rug);
-        }
     }
 
     function renderCart() {
