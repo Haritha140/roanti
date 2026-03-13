@@ -348,36 +348,42 @@ export function initRoom3D() {
         const dims = appState.roomDimensions;
         const L = dims.length * 0.3048;
         const W = dims.width * 0.3048;
+        const H = dims.height * 0.3048;
 
         let sofaZ = W * 0.65;
         let tableX = L * 0.5;
         let storageX = L * 0.15;
+        let chairX = L * 0.35;
+        let plantX = L * 0.1;
 
         appState.selectedFurniture.forEach(item => {
             const color = hexToThreeColor(item.color || appState.colors.furniture);
-            const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.5 });
+            const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.55, metalness: 0.05 });
 
-            if (item.category === 'sofa' || item.category === 'bed') {
-                if (item.category === 'bed') {
-                    addBed(furnitureGroup, mat, L * 0.5, 0, W * 0.3);
-                } else if (item.name.includes('Dining') || item.name.includes('Chair')) {
-                    addSimpleBox(furnitureGroup, mat, L * 0.4, 0.22, W * 0.45 - 0.6, 0.4, 0.04, 0.4);
-                } else if (item.name.includes('Office') || item.name.includes('Ergonomic')) {
-                    addSimpleBox(furnitureGroup, mat, L * 0.65, 0.22, W * 0.3, 0.45, 0.06, 0.45);
+            if (item.category === 'bed') {
+                addBed(furnitureGroup, mat, L * 0.5, 0, W * 0.3);
+            } else if (item.category === 'sofa') {
+                if (item.name.includes('Recliner')) {
+                    addSofa(furnitureGroup, mat, L * 0.82, 0, W * 0.6);
                 } else {
                     addSofa(furnitureGroup, mat, L * 0.5, 0, sofaZ);
                     sofaZ -= 0.5;
                 }
+            } else if (item.category === 'chair') {
+                addSimpleBox(furnitureGroup, mat, chairX, 0.22, W * 0.45 - 0.6, 0.4, 0.04, 0.4);
+                chairX += 0.55;
             } else if (item.category === 'table') {
                 if (item.name.includes('Coffee') || item.name.includes('Side')) {
                     addCoffeeTable(furnitureGroup, mat, tableX, 0, W * 0.5);
                     tableX += 0.3;
-                } else if (item.name.includes('Dining')) {
+                } else if (item.name.includes('Dining') || item.name.includes('Island')) {
                     addDiningTable(furnitureGroup, mat, L * 0.4, 0, W * 0.45);
                 } else if (item.name.includes('Desk') || item.name.includes('Executive')) {
                     addDesk(furnitureGroup, mat, L * 0.5, 0, W * 0.2);
                 } else if (item.name.includes('Nightstand')) {
                     addNightstand(furnitureGroup, mat, L * 0.8, 0, W * 0.3);
+                } else if (item.name.includes('Dressing')) {
+                    addDesk(furnitureGroup, mat, L * 0.2, 0, W * 0.15);
                 } else {
                     addCoffeeTable(furnitureGroup, mat, tableX + 1, 0, W * 0.5);
                 }
@@ -385,18 +391,21 @@ export function initRoom3D() {
                 if (item.name.includes('Arc') || item.name.includes('Floor')) {
                     addFloorLamp(furnitureGroup, L * 0.85, 0, W * 0.75);
                 } else if (item.name.includes('Pendant')) {
-                    addPendantLights(furnitureGroup, L * 0.5, dims.height * 0.3048 - 0.4, W * 0.45);
+                    addPendantLights(furnitureGroup, L * 0.5, H - 0.4, W * 0.45);
                 } else {
                     addTableLamp(furnitureGroup, L * 0.82, 0.55, W * 0.3);
                 }
             } else if (item.category === 'storage') {
-                if (item.name.includes('TV') || item.name.includes('Entertainment')) {
+                if (item.name.includes('TV')) {
                     addTVUnit(furnitureGroup, mat, L * 0.5, 0, 0.25);
-                } else if (item.name.includes('Bookshelf') || item.name.includes('Shelf')) {
+                } else if (item.name.includes('Bookshelf') || item.name.includes('Shelf') || item.name.includes('Organizer')) {
                     addBookshelf(furnitureGroup, mat, storageX, 0, W * 0.1);
                     storageX += 0.6;
                 } else if (item.name.includes('Wardrobe')) {
                     addWardrobe(furnitureGroup, mat, L * 0.1, 0, W * 0.5);
+                } else if (item.name.includes('Cabinet') || item.name.includes('Filing')) {
+                    addSimpleBox(furnitureGroup, mat, storageX, 0.33, W * 0.15, 0.4, 0.65, 0.5);
+                    storageX += 0.6;
                 } else {
                     addSimpleBox(furnitureGroup, mat, storageX, 0.33, W * 0.15, 0.4, 0.65, 0.5);
                     storageX += 0.6;
@@ -405,12 +414,15 @@ export function initRoom3D() {
                 if (item.name.includes('Rug')) {
                     addRug(furnitureGroup, color, L * 0.5, 0.002, W * 0.5);
                 } else if (item.name.includes('Plant')) {
-                    addPlant(furnitureGroup, L * 0.1, 0, W * 0.75);
+                    addPlant(furnitureGroup, plantX, 0, W * 0.75);
+                    plantX += 0.4;
                 } else if (item.name.includes('Art')) {
                     addWallArt(furnitureGroup, color, L * 0.5);
+                } else if (item.name.includes('Mirror')) {
+                    addWallArt(furnitureGroup, new THREE.Color(0xd0d8e0), L * 0.25);
                 }
             } else if (item.category === 'curtain') {
-                addCurtains(furnitureGroup, hexToThreeColor(item.color || '#FFFAF0'), L * 0.7, dims.height * 0.3048);
+                addCurtains(furnitureGroup, hexToThreeColor(item.color || '#FFFAF0'), L * 0.7, H);
             }
         });
     }
